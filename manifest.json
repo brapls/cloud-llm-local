@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "Cloud 3.0 Pipeline",
+  "name": "Local GPU AI (WebLLM)",
   "version": "1.0",
-  "description": "Privacy-aware AI pipeline",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "action": {
     "default_popup": "popup.html"
-  },
-  "permissions": [],
-  "host_permissions": [
-    "https://esm.run/*",
-    "https://cdn.jsdelivr.net/*"
-  ]
+  }
 }
