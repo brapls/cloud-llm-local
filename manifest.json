@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Cloud 3.0 Pipeline",
+  "version": "1.0",
+  "description": "Privacy-aware AI pipeline",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [],
+  "host_permissions": [
+    "https://esm.run/*",
+    "https://cdn.jsdelivr.net/*"
+  ]
+}

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Cloud Pipeline</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<h2>🚀 Cloud 3.0</h2>
+<p>Status: <span id="status">Ready</span></p>
+
+<div class="stage">
+<h3>Input</h3>
+<textarea id="input" rows="4"></textarea>
+</div>
+
+<div class="stage">
+<h3>Privacy Score</h3>
+<div id="scoreBar"><div id="scoreFill"></div></div>
+<p id="scoreText">Score: --</p>
+</div>
+
+<div class="stage">
+<h3>AI Privacy Analysis</h3>
+<pre id="aiBox"></pre>
+</div>
+
+<div class="stage">
+<h3>Output</h3>
+<div id="output"></div>
+</div>
+
+<button id="runBtn">Run Pipeline</button>
+
+<script type="module" src="popup.js"></script>
+
+</body>
+</html>
