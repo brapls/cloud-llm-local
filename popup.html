@@ -1,51 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Local AI</title>
-  <style>
-    body { font-family: Arial; padding: 10px; width: 320px; }
-
-    /* Tabs */
-    .tabs {
-      display: flex;
-      margin-bottom: 10px;
-    }
-    .tab {
-      flex: 1;
-      padding: 8px;
-      text-align: center;
-      cursor: pointer;
-      background: #ddd;
-      border: 1px solid #ccc;
-    }
-    .tab.active {
-      background: #fff;
-      font-weight: bold;
-    }
-
-    /* Sections */
-    .section {
-      display: none;
-    }
-    .section.active {
-      display: block;
-    }
-
-    textarea, input {
-      width: 100%;
-      margin-top: 5px;
-    }
-
-    textarea { height: 70px; }
-    button { width: 100%; margin-top: 10px; }
-
-    pre {
-      background: #eee;
-      padding: 5px;
-      white-space: pre-wrap;
-    }
-  </style>
-</head>
+  
 <script>
   let models = [
     "Phi-3.5-vision-instruct-q4f32_1-MLC",
@@ -179,65 +134,164 @@
     "TinyLlama-1.1B-Chat-v0.4-q4f32_1-MLC-1k"
 ]
 </script>
-<body>
-  <h3>Local GPU AI</h3>
+<head>
+  <title>AI Client</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 10px;
+      width: 360px;
+      background: #f7f7f7;
+    }
 
-  <!-- Tabs -->
-  <div class="tabs">
-    <div class="tab active" data-tab="local">Local</div>
-    <div class="tab" data-tab="url">URL</div>
-    <div class="tab" data-tab="dynamic">Dynamic</div>
-  </div>
+    h3 {
+      margin-top: 0;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      margin-bottom: 10px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      background: #ddd;
+      border: 1px solid #ccc;
+    }
+
+    .tab.active {
+      background: white;
+      font-weight: bold;
+    }
+
+    .section {
+      display: none;
+      background: white;
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      margin-top: 5px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    textarea {
+      height: 70px;
+      font-family: monospace;
+    }
+
+    .small {
+      height: 50px;
+    }
+
+    button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      cursor: pointer;
+    }
+
+    .row {
+      display: flex;
+      gap: 5px;
+    }
+
+    .row input, .row select {
+      flex: 1;
+    }
+
+    pre {
+      background: #111;
+      color: #0f0;
+      padding: 8px;
+      font-size: 11px;
+      height: 150px;
+      overflow: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+<h3>AI API Client</h3>
+
+<div class="tabs">
+  <div class="tab active" data-tab="url">URL</div>
+  <div class="tab" data-tab="local">Local using browser and GPU</div>
+</div>
+
+<!-- URL TAB -->
+<div id="url" class="section active">
+
+  <label>Preset</label>
+  <select id="preset">
+    <option value="">Custom</option>
+    <option value="openai">OpenAI</option>
+    <option value="ollama">Ollama</option>
+    <option value="hf">HuggingFace</option>
+  </select>
+
+  <label>Method</label>
+  <select id="method">
+    <option>POST</option>
+    <option>GET</option>
+  </select>
+
+  <label>URL</label>
+  <input id="urlField" placeholder="https://api..." />
+
+  <label>Token</label>
+  <input id="tokenField" placeholder="Bearer token (optional)" />
+
+  <label>Headers (JSON)</label>
+  <textarea id="headersField" class="small">{}</textarea>
+
+  <label>Body Template (JSON)</label>
+  <textarea id="templateField">
+{
+  "prompt": "{{prompt}}"
+}
+  </textarea>
 
   <label>Prompt</label>
-  <textarea id="prompt"></textarea>
-  <!-- Local -->
-  <div id="local" class="section active">
-    <label>Model</label>
-    <select id="modelField">
-      <option value="">Select a model</option>
-      <!-- Options will be populated by JavaScript -->
-    </select>
-  </div>
+  <textarea id="urlPrompt"></textarea>
 
-  <!-- URL -->
-  <div id="url" class="section">
-    <label>URL</label>
-    <input type="text" id="urlField" placeholder="https://...?token=...">
-  </div>
+  <label>Response Path</label>
+  <input id="responsePath" placeholder="choices[0].message.content" />
+  
+</div>
+<!-- LOCAL TAB -->
+<div id="local" class="section">
 
-  <!-- Dynamic -->
-  <div id="dynamic" class="section">
-    <label>Model</label>
-    <select id="dynamic_modelField">
-      <option value="">Select a model</option>
-      <!-- Options will be populated by JavaScript -->
-    </select>
+  <label>Prompt</label>
+  <textarea id="localPrompt"></textarea>
+  <label>Model</label>
+  <select id="modelSelect">
+    <script>
+      models.forEach(model => {
+        document.write(`<option value="${model}">${model}</option>`);
+      });</script>
+  </select>
+</div>
+  <button id="runBtn">Send Request</button>
 
-    <label>URL</label>
-    <input type="text" id="dynamic_urlField" placeholder="https://...?token=...">
-  </div>
 
-  <button id="runBtn">Run</button>
+<h4>Response</h4>
+<pre id="output"></pre>
 
-  <h4>Output</h4>
-  <pre id="output"></pre>
+<script src="popup.js"></script>
 
-  <script src="popup.js"></script>
 </body>
-  <script>
-    const modelSelect = document.getElementById("modelField");
-    const dynamicModelSelect = document.getElementById("dynamic_modelField");
-    models.forEach(model => {
-      const option = document.createElement("option");
-      option.value = model;
-      option.textContent = model;
-      modelSelect.appendChild(option);
-      
-      const option2 = document.createElement("option");
-      option2.value = model;
-      option2.textContent = model;
-      dynamicModelSelect.appendChild(option2);
-    });
-  </script>
+
 </html>
