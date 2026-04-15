@@ -3,26 +3,20 @@ import * as webllm from "./web-llm.js";
 let engine = null;
 let loading = false;
 
-async function init() {
-  if (engine || loading) return;
-  //document.getElementById("runBtn").disabled = true;
-  loading = true;
-  console.log("Initializing WebLLM...");
-  //Llama-3.2-3B-Instruct-q4f16_1-MLC, too slow
-  engine = await webllm.CreateMLCEngine(
-    "TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC-1k",
-    {
-      initProgressCallback: (p) => console.log(p)
-    }
-  );
+let currentModel = null;
 
-  console.log("Model ready");
+async function init(model) {
+  if (loading) return;
+  if (engine && currentModel === model) return;
+
+  loading = true;
+  engine = await webllm.CreateMLCEngine(model);
+  currentModel = model;
   loading = false;
-  //document.getElementById("runBtn").disabled = false;
 }
 
-async function runPrompt(text) {
-  await init();
+async function runPrompt(text, model) {
+  await init(model);
 
   const res = await engine.chat.completions.create({
     messages: [
@@ -53,7 +47,7 @@ async function updateCorsBypass(userUrl) {
     },
     condition: {
       urlFilter: filter,
-      resourceTypes: ["xmlhttprequest"]
+      resourceTypes: ["xmlhttprequest", "fetch"]
     }
   };
 
@@ -70,7 +64,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     //updateCorsBypass(msg.url);
     console.log("Received prompt in background:");
     console.log(msg);
-    runPrompt(msg.text)
+    runPrompt(msg.text, msg.model)
       .then((result) => sendResponse({ result }))
       .catch((err) => sendResponse({ error: err.message }));
 
