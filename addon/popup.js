@@ -91,6 +91,7 @@ document.getElementById("preset").addEventListener("change", e => {
 
 // -------- API Call --------
 async function callAPI({ url, method, headers, body }) {
+
   const res = await fetch(url, {
     method,
     headers,
@@ -132,9 +133,11 @@ document.getElementById("runBtn").addEventListener("click", async () => {
 
   } else {
     let prompt = document.getElementById("urlPrompt").value;
-    let url;
+    let url = document.getElementById("urlField").value;
+    
     try {
-      url = new URL(userUrl);
+      console.log("Parsing URL..." +url);
+      url = new URL(url);
     } catch {
       document.getElementById("output").textContent = "Error: Invalid URL (must include http/https)";
       throw new Error("Invalid URL (must include http/https)");
