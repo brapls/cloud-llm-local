@@ -5,6 +5,7 @@ app = Flask(__name__)
 
 @app.route('/prompt', methods=['POST'])
 def prompt_model():
+    print("Received request at /prompt endpoint")
     # Get data from the POST request
     data = request.get_json()
     
@@ -12,6 +13,7 @@ def prompt_model():
         return jsonify({"error": "Missing 'prompt' in request body"}), 400
     
     user_prompt = data.get('prompt')
+    print(f"User prompt: {user_prompt}")
     model_name = data.get('model', 'phi3:mini') # Default to llama3.2
     
     try:

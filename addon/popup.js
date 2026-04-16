@@ -1,3 +1,70 @@
+// -------- Local Storage Implementation --------
+
+// Array of all the input IDs you want to save
+const trackedInputs = [
+  "localPrompt", "modelSelect", "urlPrompt", "urlField",
+  "method", "tokenField", "templateField", "headersField",
+  "responsePath", "preset"
+];
+
+// Function to save current state
+function saveSettings() {
+  const dataToSave = {};
+  
+  // Save all text areas and inputs
+  trackedInputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) dataToSave[id] = el.value;
+  });
+
+  // Save the currently active tab
+  const activeTab = document.querySelector(".tab.active")?.dataset.tab;
+  if (activeTab) dataToSave.activeTab = activeTab;
+
+  // Write to Chrome storage
+  chrome.storage.local.set(dataToSave);
+}
+
+// Function to load saved state
+function loadSettings() {
+  chrome.storage.local.get(null, (savedData) => {
+    // Restore text areas and inputs
+    trackedInputs.forEach(id => {
+      if (savedData[id] !== undefined) {
+        const el = document.getElementById(id);
+        if (el) el.value = savedData[id];
+      }
+    });
+
+    // Restore active tab
+    if (savedData.activeTab) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      
+      const targetTab = document.querySelector(`.tab[data-tab="${savedData.activeTab}"]`);
+      const targetSection = document.getElementById(savedData.activeTab);
+      
+      if (targetTab && targetSection) {
+        targetTab.classList.add("active");
+        targetSection.classList.add("active");
+      }
+    }
+  });
+}
+
+// -------- Attach Event Listeners for Saving --------
+
+// Listen for typing/changing on all tracked inputs
+trackedInputs.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener("input", saveSettings);
+    el.addEventListener("change", saveSettings);
+  }
+});
+
+// Load everything when the popup opens
+document.addEventListener("DOMContentLoaded", loadSettings);
 // -------- Tabs --------
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
@@ -6,9 +73,19 @@ document.querySelectorAll(".tab").forEach(tab => {
 
     tab.classList.add("active");
     document.getElementById(tab.dataset.tab).classList.add("active");
+    saveSettings();
   });
 });
+document.getElementById("preset").addEventListener("change", e => {
+  const p = presets[e.target.value];
+  if (!p) return;
 
+  document.getElementById("templateField").value = JSON.stringify(p.template, null, 2);
+  document.getElementById("headersField").value = JSON.stringify(p.headers, null, 2);
+  document.getElementById("responsePath").value = p.path;
+  
+  saveSettings(); // <-- Add this line here
+});
 // -------- Utils --------
 function safeJSONParse(str) {
   try { return JSON.parse(str); } catch { return null; }
@@ -134,12 +211,15 @@ document.getElementById("runBtn").addEventListener("click", async () => {
   } else {
     let prompt = document.getElementById("urlPrompt").value;
     let url = document.getElementById("urlField").value;
-    
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'http://' + url;
+    }
     try {
       console.log("Parsing URL..." +url);
       url = new URL(url);
     } catch {
       document.getElementById("output").textContent = "Error: Invalid URL (must include http/https)";
+      document.getElementById("runBtn").disabled = false;
       throw new Error("Invalid URL (must include http/https)");
     }
     chrome.runtime.sendMessage({ type: "UPDATE_CORS", url}, async (res) => {
@@ -165,17 +245,17 @@ document.getElementById("runBtn").addEventListener("click", async () => {
         if (extracted) output = extracted;
       }
 
-      document.getElementById("output").textContent =
-        typeof output === "string"
-          ? output
-          : () => {try {
-              return JSON.parse(str);
-            } catch (e) {
-              console.error("Template parse error:", str);
-              return "error parsing response:" + output.raw;
-            }
-          }
-      
+    
+      if(typeof output === "string"){
+        document.getElementById("output").textContent = output
+      } else {
+        try {
+          document.getElementById("output").textContent = JSON.parse(output);
+        } catch (e) {
+          console.error("Couldn't parse, maybe not a json:", output);
+          document.getElementById("output").textContent = JSON.stringify(output);
+        }
+      }        
       document.getElementById("runBtn").disabled = false;
     });
   }
