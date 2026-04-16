@@ -57,13 +57,11 @@ async function updateCorsBypass(userUrl) {
     addRules: [newRule]
   });
 
-  console.log("CORS bypass rule updated for:", filter);
 } //allows chrome extension to bypass CORS for specified URL, enabling API calls to local servers without CORS issues, many localhost ai servers have CORS disabled, so this is necessary for the extension to function properly
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "PROMPT") {
-    //updateCorsBypass(msg.url);
-    console.log("Received prompt in background:");
-    console.log(msg);
+    updateCorsBypass(msg.url);
     runPrompt(msg.text, msg.model)
       .then((result) => sendResponse({ result }))
       .catch((err) => sendResponse({ error: err.message }));
@@ -75,5 +73,5 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       .then(() => sendResponse({ success: true }))
       .catch((err) => sendResponse({ error: err.message }));
     return true;
-  }
+  } 
 });

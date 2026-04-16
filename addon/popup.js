@@ -193,11 +193,6 @@ document.getElementById("runBtn").addEventListener("click", async () => {
     output.textContent = "Running...";
 
     chrome.runtime.sendMessage({ type: "PROMPT", text: text, model}, (res) => {
-      if (chrome.runtime.lastError) {
-        output.textContent = "Error: " + chrome.runtime.lastError.message;
-        return;
-      }
-
       if (res.error) {
         console.error("Error from background:", res.error);
         output.textContent = "Error: " + res.error;
@@ -223,40 +218,38 @@ document.getElementById("runBtn").addEventListener("click", async () => {
       throw new Error("Invalid URL (must include http/https)");
     }
     chrome.runtime.sendMessage({ type: "UPDATE_CORS", url}, async (res) => {
-      const method = document.getElementById("method").value;
-      const token = document.getElementById("tokenField").value;
+    const method = document.getElementById("method").value;
+    const token = document.getElementById("tokenField").value;
 
-      const template = safeJSONParse(document.getElementById("templateField").value);
-      const headersInput = safeJSONParse(document.getElementById("headersField").value) || {};
-      const responsePath = document.getElementById("responsePath").value;
+    const template = safeJSONParse(document.getElementById("templateField").value);
+    const headersInput = safeJSONParse(document.getElementById("headersField").value) || {};
+    const responsePath = document.getElementById("responsePath").value;
 
-      const body = template ? applyTemplate(template, { prompt, token }) : { prompt };
+    const body = template ? applyTemplate(template, { prompt, token }) : { prompt };
 
-      const headers = {
-        "Content-Type": "application/json",
-        ...applyTemplate(headersInput, { token })
-      };
+    const headers = {
+      "Content-Type": "application/json",
+      ...applyTemplate(headersInput, { token })
+    };
+    const result = await callAPI({ url, method, headers, body });
+    let output = result;
+    if (responsePath) {
+      const extracted = extractValue(result, responsePath);
+      if (extracted) output = extracted;
+    }
 
-      const result = await callAPI({ url, method, headers, body });
-
-      let output = result;
-      if (responsePath) {
-        const extracted = extractValue(result, responsePath);
-        if (extracted) output = extracted;
+  
+    if(typeof output === "string"){
+      document.getElementById("output").textContent = output
+    } else {
+      try {
+        document.getElementById("output").textContent = JSON.parse(output);
+      } catch (e) {
+        console.error("Couldn't parse, maybe not a json:", output);
+        document.getElementById("output").textContent = JSON.stringify(output);
       }
-
-    
-      if(typeof output === "string"){
-        document.getElementById("output").textContent = output
-      } else {
-        try {
-          document.getElementById("output").textContent = JSON.parse(output);
-        } catch (e) {
-          console.error("Couldn't parse, maybe not a json:", output);
-          document.getElementById("output").textContent = JSON.stringify(output);
-        }
-      }        
-      document.getElementById("runBtn").disabled = false;
+    }        
+    document.getElementById("runBtn").disabled = false;
     });
   }
 });

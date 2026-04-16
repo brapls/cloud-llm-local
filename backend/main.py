@@ -14,7 +14,7 @@ def prompt_model():
     
     user_prompt = data.get('prompt')
     print(f"User prompt: {user_prompt}")
-    model_name = data.get('model', 'phi3:mini') # Default to llama3.2
+    model_name = data.get('model', 'phi3:mini-4k') # Default to llama3.2
     
     try:
         # Call Ollama
